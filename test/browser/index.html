@@ -1,0 +1,40 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mocha Tests</title>
+  <link rel="stylesheet" href="mocha.css" />
+</head>
+<body>
+  <div id="mocha"></div>
+  <script>
+    window.debug='chat';
+  </script>
+  <script src="jquery.min.js"></script>
+  <script src="async.js"></script>
+  <script src="lodash.js"></script>
+  <script src="/_api/_files/hoodie.js"></script>
+  <script src="mocha.js"></script>
+  <script src="chai.js"></script>
+  <script src="sinon-1.12.2.js"></script>
+  <script>
+    mocha.ui('tdd');
+    mocha.reporter('html');
+    assert = chai.assert;
+    hoodie = new Hoodie();
+  </script>
+  <script src="fixtures.js"></script>
+  <script src="utils.js"></script>
+  <script src="test-social.js"></script>
+  <script src="test-notification.js"></script>
+  <script src="test-feed.js"></script>
+  <script src="test-profile.js"></script>
+  <script>
+    if (window.mochaPhantomJS) {
+      mochaPhantomJS.run();
+    }
+    else {
+      mocha.run();
+    }
+  </script>
+</body>
+</html>
