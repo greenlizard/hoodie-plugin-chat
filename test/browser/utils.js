@@ -44,10 +44,10 @@ var signinUser = function (user, pass, done) {
     });
 };
 
-var cleanPosts = function (u, done) {
+var cleanTalks = function (u, done) {
   hoodie.account.signIn(u.username, u.password)
     .then(function () {
-      hoodie.chat.deletePost()
+      hoodie.chat.deleteTalk()
       .always(function () {
         hoodie.account.signOut()
           .always(function () { done() } );
@@ -55,12 +55,12 @@ var cleanPosts = function (u, done) {
     });
 };
 
-var cleanAllPosts = function (done) {
+var cleanAllTalks = function (done) {
   var users = window.fixtures['users'];
 
   localStorage.clear();
   hoodie.account.signOut()
     .always(function () {
-      async.eachSeries(users, cleanPosts, done);
+      async.eachSeries(users, cleanTalks, done);
     });
 };

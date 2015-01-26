@@ -2,7 +2,7 @@ suite('feed', function () {
   this.timeout(50000);
 
   suiteSetup(loadUsers);
-  suiteSetup(cleanAllPosts);
+  suiteSetup(cleanAllTalks);
 
   test('signIn hommer', function (done) {
     hoodie.account.signIn('Hommer', '123')
@@ -20,88 +20,88 @@ suite('feed', function () {
       });
   });
 
-  test('hommer should post', function (done) {
-    hoodie.chat.post({text: 'dooh!'})
+  test('hommer should talk', function (done) {
+    hoodie.chat.talk({text: 'dooh!'})
       .fail(function (err) {
         done(err);
         assert.ok(false, err.message);
       })
       .then(function () {
-        assert.ok(true, 'post with success');
+        assert.ok(true, 'talk with success');
         done();
       });
   });
 
-  test('hommer should get post/text feed', function (done) {
+  test('hommer should get talk/text feed', function (done) {
     hoodie.chat.feed()
       .fail(done)
       .then(function (task) {
-        this.hommerPost = task.chat.feed[0];
+        this.hommerTalk = task.chat.feed[0];
         done();
         assert.ok(true, 'feed with success');
       }.bind(this));
   });
 
-  test('hommer should edit post', function (done) {
-    var hommerPost = this.hommerPost;
-    hommerPost.title = 'D\'oh Homer';
-    hommerPost.text = 'Hmm... Donuts!';
+  test('hommer should edit talk', function (done) {
+    var hommerTalk = this.hommerTalk;
+    hommerTalk.title = 'D\'oh Homer';
+    hommerTalk.text = 'Hmm... Donuts!';
 
-    hoodie.chat.updatePost(hommerPost)
+    hoodie.chat.updateTalk(hommerTalk)
       .fail(done)
       .then(function () {
         done();
-        assert.ok(true, 'post with success');
+        assert.ok(true, 'talk with success');
       });
   });
 
-  test('lisa should post', function (done) {
+  test('lisa should talk', function (done) {
     signinUser('Lisa', '123', function () {
-      hoodie.chat.post({text: 'i m vegan!'})
+      hoodie.chat.talk({text: 'i m vegan!'})
         .fail(function (err) {
           done((err.message !== 'conflict') ? err: null);
           assert.ok(false, err.message);
         })
-        .then(function (post) {
-          assert.ok(true, 'post with success');
+        .then(function (talk) {
+          assert.ok(true, 'talk with success');
           done();
         });
     })
   });
 
 
-  test('lisa should not edit hommer post', function (done) {
-    var hommerPost = this.hommerPost;
-    hommerPost.title = 'D\'oh Homer';
-    hommerPost.text = 'vegan daddy!!';
+  test('lisa should not edit hommer talk', function (done) {
+    var hommerTalk = this.hommerTalk;
+    hommerTalk.title = 'D\'oh Homer';
+    hommerTalk.text = 'vegan daddy!!';
 
-    hoodie.chat.updatePost(hommerPost)
+    hoodie.chat.updateTalk(hommerTalk)
       .fail(function () {
         done();
-        assert.ok(true, 'post should not edit by lisa');
+        assert.ok(true, 'talk should not edit by lisa');
       })
       .then(function () {
         done();
-        assert.ok(false, 'post hould edit only by owner');
+        assert.ok(false, 'talk hould edit only by owner');
       });
   });
 
 
-  test('lisa should not delete hommer post', function (done) {
-    var hommerPost = this.hommerPost;
+  test('lisa should not delete hommer talk', function (done) {
+    var hommerTalk = this.hommerTalk;
 
-    hoodie.chat.deletePost(hommerPost)
+    hoodie.chat.deleteTalk(hommerTalk)
       .fail(function () {
         done();
-        assert.ok(true, 'post should not delete by lisa');
+        assert.ok(true, 'talk should not delete by lisa');
       })
       .then(function () {
         done();
-        assert.ok(false, 'post hould delete only by owner');
+        assert.ok(false, 'talk hould delete only by owner');
       });
   });
 
-  test('hommer should get 2 post in his feed', function (done) {
+  test('hommer should get 2 talk in his feed', function (done) {
     signinUser('Hommer', '123', function () {
       hoodie.chat.feed()
         .fail(function (err) {
@@ -122,260 +122,260 @@ suite('feed', function () {
         assert.ok(false, err.message);
       })
       .then(function (task) {
-        this.lisaPost = task.chat.feed[0];
+        this.lisaTalk = task.chat.feed[0];
         done();
         assert.ok(task.chat.feed.length == 1, 'feed with success');
       }.bind(this));
   });
 
 
- test('hommer should not edit lisa post', function (done) {
-    var lisaPost = this.lisaPost;
-    lisaPost.title = 'Lisaaa';
-    lisaPost.text = 'vegan?? chamed!';
+ test('hommer should not edit lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
+    lisaTalk.title = 'Lisaaa';
+    lisaTalk.text = 'vegan?? chamed!';
 
-    hoodie.chat.updatePost(lisaPost)
+    hoodie.chat.updateTalk(lisaTalk)
       .fail(function () {
         done();
-        assert.ok(true, 'post should not edit by hommer');
+        assert.ok(true, 'talk should not edit by hommer');
       })
       .then(function () {
         done();
-        assert.ok(false, 'post hould edit only by owner');
+        assert.ok(false, 'talk hould edit only by owner');
       });
   });
 
 
-  test('hommer should not delete lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('hommer should not delete lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
 
-    hoodie.chat.deletePost(lisaPost)
+    hoodie.chat.deleteTalk(lisaTalk)
       .fail(function () {
         done();
-        assert.ok(true, 'post should not delete by hommer');
+        assert.ok(true, 'talk should not delete by hommer');
       })
       .then(function () {
         done();
-        assert.ok(false, 'post hould delete only by owner');
+        assert.ok(false, 'talk hould delete only by owner');
       });
   });
 
-  test('hommer should comment lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('hommer should message lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
 
-    hoodie.chat.comment(lisaPost, {text: 'vegan means eat bacon right?!'})
+    hoodie.chat.message(lisaTalk, {text: 'vegan means eat bacon right?!'})
       .fail(done)
       .then(function (task) {
-        this.hommerComment = task.chat.comment;
-        assert.ok(true, 'comment with success');
+        this.hommerMessage = task.chat.message;
+        assert.ok(true, 'message with success');
         done();
       }.bind(this));
   });
 
-  test('lisa should comment lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('lisa should message lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Lisa', '123', function () {
-      hoodie.chat.comment(lisaPost, {text: 'no daddy bacon is an animal!'})
+      hoodie.chat.message(lisaTalk, {text: 'no daddy bacon is an animal!'})
         .fail(done)
         .then(function (task) {
-          this.lisaComment = task.chat.comment;
-          assert.ok(true, 'comment with success');
+          this.lisaMessage = task.chat.message;
+          assert.ok(true, 'message with success');
           done();
         }.bind(this));
     }.bind(this));
   });
 
-  test('bart should comment lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('bart should message lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Bart', '123', function () {
-      hoodie.chat.comment(lisaPost, {text: 'bacon is not animal, right hommer?'})
+      hoodie.chat.message(lisaTalk, {text: 'bacon is not animal, right hommer?'})
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
     })
   });
 
-  test('homer should comment again lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('homer should message again lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Hommer', '123', function () {
-      hoodie.chat.comment(lisaPost, {text: 'sure bacon is happynes!'})
+      hoodie.chat.message(lisaTalk, {text: 'sure bacon is happynes!'})
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
     })
   });
 
-  test('homer should like lisa post', function (done) {
-    var lisaPost = this.lisaPost;
-    hoodie.chat.count(lisaPost, 'like')
+  test('homer should like lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
+    hoodie.chat.count(lisaTalk, 'like')
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
   });
 
 
-  test('lisa should like lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('lisa should like lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Lisa', '123', function () {
-      hoodie.chat.count(lisaPost, 'like')
+      hoodie.chat.count(lisaTalk, 'like')
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
     })
   });
 
 
-  test('bart should like lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('bart should like lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Bart', '123', function () {
-      hoodie.chat.count(lisaPost, 'like')
+      hoodie.chat.count(lisaTalk, 'like')
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
     })
   });
 
 
-  test('hommer should unlike lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('hommer should unlike lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Hommer', '123', function () {
-      hoodie.chat.uncount(lisaPost, 'like')
+      hoodie.chat.uncount(lisaTalk, 'like')
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
     })
   });
 
-  test('cat should like with like lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('cat should like with like lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Cat', '123', function () {
-      hoodie.chat.like(lisaPost)
+      hoodie.chat.like(lisaTalk)
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
     })
   });
 
-  test('dog should like with like lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('dog should like with like lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Dog', '123', function () {
-      hoodie.chat.like(lisaPost)
+      hoodie.chat.like(lisaTalk)
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
     })
   });
 
-  test('Dog should unlike with unlike lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('Dog should unlike with unlike lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Dog', '123', function () {
-      hoodie.chat.unlike(lisaPost)
+      hoodie.chat.unlike(lisaTalk)
       .fail(done)
       .then(function () {
-        assert.ok(true, 'comment with success');
+        assert.ok(true, 'message with success');
         done();
       });
     })
   });
 
-  test('hommer should get lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('hommer should get lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Hommer', '123', function () {
-      hoodie.chat.getPost(lisaPost)
+      hoodie.chat.getTalk(lisaTalk)
         .fail(done)
         .then(function (task) {
-          assert.ok(task.chat.post.countType.like.length === 3, 'comment with success');
+          assert.ok(task.chat.talk.countType.like.length === 3, 'message with success');
           done();
         });
     })
   });
 
-  test('hommer should not update lisa comment', function (done) {
-    var lisaPost = this.lisaPost;
-    var lisaComment = this.lisaComment;
+  test('hommer should not update lisa message', function (done) {
+    var lisaTalk = this.lisaTalk;
+    var lisaMessage = this.lisaMessage;
     signinUser('Hommer', '123', function () {
-      hoodie.chat.updateComment(lisaPost, lisaComment)
+      hoodie.chat.updateMessage(lisaTalk, lisaMessage)
         .fail(function (err) {
-          assert.ok(err, 'comment with success');
+          assert.ok(err, 'message with success');
           done();
         })
         .then(function () {
-          assert.ok(false, 'wrong comment update');
+          assert.ok(false, 'wrong message update');
           done();
         });
     })
   });
 
-  test('hommer should not delete lisa comment', function (done) {
-    var lisaPost = this.lisaPost;
-    var lisaComment = this.lisaComment;
+  test('hommer should not delete lisa message', function (done) {
+    var lisaTalk = this.lisaTalk;
+    var lisaMessage = this.lisaMessage;
     signinUser('Hommer', '123', function () {
-      hoodie.chat.deleteComment(lisaPost, lisaComment)
+      hoodie.chat.deleteMessage(lisaTalk, lisaMessage)
         .fail(function (err) {
-          assert.ok(err, 'comment with success');
+          assert.ok(err, 'message with success');
           done();
         })
         .then(function () {
-          assert.ok(false, 'wrong comment update');
+          assert.ok(false, 'wrong message update');
           done();
         });
     })
   });
 
-  test('hommer should update his comment', function (done) {
-    var lisaPost = this.lisaPost;
-    var hommerComment = this.hommerComment;
-    hommerComment.text = 'D\'oh!!!!!!!';
+  test('hommer should update his message', function (done) {
+    var lisaTalk = this.lisaTalk;
+    var hommerMessage = this.hommerMessage;
+    hommerMessage.text = 'D\'oh!!!!!!!';
     signinUser('Hommer', '123', function () {
-      hoodie.chat.updateComment(lisaPost, hommerComment)
+      hoodie.chat.updateMessage(lisaTalk, hommerMessage)
         .fail(done)
         .then(function (task) {
-          assert.ok(task.chat.comment.text === hommerComment.text, 'comment with success');
+          assert.ok(task.chat.message.text === hommerMessage.text, 'message with success');
           done();
         });
     })
   });
 
-  test('hommer should delete his comment', function (done) {
-    var lisaPost = this.lisaPost;
-    var hommerComment = this.hommerComment;
+  test('hommer should delete his message', function (done) {
+    var lisaTalk = this.lisaTalk;
+    var hommerMessage = this.hommerMessage;
     signinUser('Hommer', '123', function () {
-      hoodie.chat.deleteComment(lisaPost, hommerComment)
+      hoodie.chat.deleteMessage(lisaTalk, hommerMessage)
         .fail(function (err) {
           done(err);
         })
         .then(function () {
-          assert.ok(true, 'delete comment with success');
+          assert.ok(true, 'delete message with success');
           done();
         });
     })
   });
 
-  test('hommer should share lisa post', function (done) {
-    var lisaPost = this.lisaPost;
+  test('hommer should share lisa talk', function (done) {
+    var lisaTalk = this.lisaTalk;
     signinUser('Hommer', '123', function () {
-      hoodie.chat.share(lisaPost)
+      hoodie.chat.share(lisaTalk)
         .fail(function (err) {
           done(err);
         })
         .then(function () {
-          assert.ok(true, 'share post with success');
+          assert.ok(true, 'share talk with success');
           done();
         });
     })

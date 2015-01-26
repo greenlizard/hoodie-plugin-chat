@@ -17,20 +17,15 @@ module.exports = function (hoodie, callback) {
   var chat = new Chat(hoodie);
 
   hoodie.task.on('chatlookup:add', chat.lookup);
-  hoodie.task.on('chatfollow:add', chat.follow);
-  hoodie.task.on('chatunfollow:add', chat.unfollow);
-  hoodie.task.on('chatpost:add', chat.post);
-  hoodie.task.on('chatgetpost:add', chat.getPost);
-  hoodie.task.on('chatupdatepost:add', chat.updatePost);
-  hoodie.task.on('chatdeletepost:add', chat.deletePost);
-  hoodie.task.on('chatcomment:add', chat.comment);
-  hoodie.task.on('chatupdatecomment:add', chat.updateComment);
-  hoodie.task.on('chatdeletecomment:add', chat.deleteComment);
-  hoodie.task.on('chatcount:add', chat.count);
-  hoodie.task.on('chatuncount:add', chat.uncount);
+  hoodie.task.on('chattalk:add', chat.talk);
+  hoodie.task.on('chatgettalk:add', chat.getTalk);
+  hoodie.task.on('chatupdatetalk:add', chat.updateTalk);
+  hoodie.task.on('chatdeletetalk:add', chat.deleteTalk);
+  hoodie.task.on('chatmessage:add', chat.message);
+  hoodie.task.on('chatupdatemessage:add', chat.updateMessage);
+  hoodie.task.on('chatdeletemessage:add', chat.deleteMessage);
   hoodie.task.on('chatfeed:add', chat.feed);
-  hoodie.task.on('chatshare:add', chat.sharePost);
-  hoodie.task.on('chatdualfollow:add', chat.dualFollow);
+  hoodie.task.on('chatshare:add', chat.shareTalk);
 
   hoodie.task.on('chatnotification:add', chat.createNotification);
 

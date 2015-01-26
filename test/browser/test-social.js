@@ -19,7 +19,7 @@ suite('network', function () {
       });
   });
 
-  test('hommer should subscribe bart posts', function (done) {
+  test('hommer should subscribe bart talks', function (done) {
     hoodie.chat.follow('Bart')
       .fail(function (err) {
         done((err.message !=='You already subscribed.') ? err: null);
@@ -31,7 +31,7 @@ suite('network', function () {
       });
   });
 
-  test('hommer should not subscribe bart posts', function (done) {
+  test('hommer should not subscribe bart talks', function (done) {
     hoodie.chat.follow('Bart')
       .fail(function (err) {
         done();
@@ -43,7 +43,7 @@ suite('network', function () {
       });
   });
 
-  test('hommer should subscribe marge posts', function (done) {
+  test('hommer should subscribe marge talks', function (done) {
     hoodie.chat.follow('Margie')
       .fail(function (err) {
         done((err.message !=='You already subscribed.')? err: null);
@@ -55,7 +55,7 @@ suite('network', function () {
       });
   });
 
-  test('hommer should subscribe lisa posts', function (done) {
+  test('hommer should subscribe lisa talks', function (done) {
     hoodie.chat.follow('Lisa')
       .fail(function (err) {
         done((err.message !=='You already subscribed.')? err: null);
@@ -91,7 +91,7 @@ suite('network', function () {
       });
   });
 
-  test('hommer should unsubscribe bart posts', function (done) {
+  test('hommer should unsubscribe bart talks', function (done) {
     hoodie.chat.unfollow('Bart')
       .fail(function (err) {
         done(err);
