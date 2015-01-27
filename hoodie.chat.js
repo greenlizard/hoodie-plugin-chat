@@ -216,6 +216,9 @@ Hoodie.extend(function (hoodie) {
         .then(defer.resolve)
         .fail(defer.reject);
       return defer.promise();
+    },
+    on: function(cb) {
+      hoodie.store.on('chat:change', cb);
     }
   };
 
