@@ -8,6 +8,37 @@
 Hoodie.extend(function (hoodie) {
   'use strict';
 
+  var dualFollow = function (task) {
+    var defer = window.jQuery.Deferred();
+    defer.notify('dualFollow', arguments, false);
+    hoodie.task('chatdualfollow').start(task)
+      .then(defer.resolve)
+      .fail(defer.reject);
+    return defer.promise();
+  };
+
+  var findTalkByParticipant = function (participants) {
+    var defer = window.jQuery.Deferred();
+    defer.notify('findTalkByParticipant', arguments, false);
+    hoodie.store.findAll('chat')
+      .then(function (chats) {
+        var chat = chats.map(function (cv) {
+          var found = cv.participants
+            .map(function (cpv) {
+              return (participants.indexOf(cpv) >= 0);
+            })
+            .reduce(function (a, c) {
+              return a && c;
+            });
+          if (found)
+            return cv;
+        });
+        defer.resolve(chat[0]);
+      })
+      .fail(defer.reject);
+    return defer.promise();
+  };
+
   hoodie.chat = {
 
     getProfile: function (userName) {
@@ -29,129 +60,163 @@ Hoodie.extend(function (hoodie) {
       return defer.promise();
     },
 
-    talk: function (talkObject, userName) {
+    talk: function (userName) {
       var defer = window.jQuery.Deferred();
       defer.notify('talk', arguments, false);
       hoodie.chat.getProfile(userName)
         .fail(defer.reject)
         .then(function (task) {
-          task.chat = task.profile;
-          task.chat.talk = talkObject;
-          hoodie.task('chattalk').start(task)
-            .then(defer.resolve)
-            .fail(defer.reject);
+          task.chat = {
+            dualFollow: {
+              to: task.profile.userId,
+              from: hoodie.id()
+            }
+          };
+          var participants = [task.chat.dualFollow.to, task.chat.dualFollow.from];
+          var chat = {
+            participants: participants,
+            messages: []
+          };
+          dualFollow(task)
+            .then(function () {
+              hoodie.store.add('chat', chat)
+                .then(defer.resolve)
+                .fail(defer.reject);
+            })
+            .fail(function (err) {
+              if (err.err !== 'You already subscribed.')
+                defer.reject(err);
+              else
+                findTalkByParticipant(participants)
+                  .then(function (talk) {
+                    if (talk) {
+                      defer.resolve(talk);
+                    } else {
+                      hoodie.store.add('chat', chat)
+                        .then(defer.resolve)
+                        .fail(defer.reject);
+                    }
+                  })
+                  .fail(defer.reject);
+            });
         });
       return defer.promise();
     },
-    updateTalk: function (talkObject, userName) {
+    updateTalk: function (talkObject) {
       var defer = window.jQuery.Deferred();
       defer.notify('updateTalk', arguments, false);
-      hoodie.chat.getProfile(userName)
-        .fail(defer.reject)
-        .then(function (task) {
-          task.chat = task.profile;
-          task.chat.talk = talkObject;
-          hoodie.task('chatupdatetalk').start(task)
-            .then(defer.resolve)
-            .fail(defer.reject);
-        });
+      hoodie.store.save('chat', talkObject.id, talkObject)
+        .then(defer.resolve)
+        .fail(defer.reject);
       return defer.promise();
     },
-    deleteTalk: function (talkObject, userName) {
+    deleteTalk: function (id) {
       var defer = window.jQuery.Deferred();
       defer.notify('deleteTalk', arguments, false);
-      hoodie.chat.getProfile(userName)
-        .fail(defer.reject)
-        .then(function (task) {
-          task.chat = task.profile;
-          task.chat.talk = talkObject;
-          hoodie.task('chatdeletetalk').start(task)
-            .then(defer.resolve)
-            .fail(defer.reject);
-        });
+      if (!id) {
+        hoodie.store.removeAll('chat')
+          .then(defer.resolve)
+          .fail(defer.reject);
+      } else {
+        hoodie.store.remove('chat', id)
+          .then(defer.resolve)
+          .fail(defer.reject);
+      }
       return defer.promise();
     },
-    feed: function (userName) {
+    feed: function () {
       var defer = window.jQuery.Deferred();
       defer.notify('feed', arguments, false);
-      hoodie.chat.getProfile(userName)
-        .fail(defer.reject)
-        .then(function (task) {
-          task.chat = task.profile;
-          hoodie.task('chatfeed').start(task)
-            .then(defer.resolve)
-            .fail(defer.reject);
-        });
+      hoodie.store.findAll('chat')
+        .then(function (chats) {
+          var task = {
+            chat: {
+              feed: chats
+            }
+          };
+          defer.resolve(task);
+        })
+        .fail(defer.reject);
+
       return defer.promise();
     },
     message: function (talkObject, messageObject) {
       var defer = window.jQuery.Deferred();
       defer.notify('message', arguments, false);
-      var task = {
-        chat: {
-          talk: talkObject,
-          message: messageObject
-        }
+      messageObject.id = (Date.now()).toString(36);
+      messageObject.owner = {
+        userId: hoodie.id()
       };
-      hoodie.task('chatmessage').start(task)
-        .then(defer.resolve)
+      talkObject.messages.push(messageObject);
+      hoodie.store.save('chat', talkObject.id, talkObject)
+        .then(function (chat) {
+          var task = {
+            chat: chat
+          };
+          task.chat.message = messageObject;
+          defer.resolve(task)
+        })
         .fail(defer.reject);
       return defer.promise();
     },
     updateMessage: function (talkObject, messageObject) {
       var defer = window.jQuery.Deferred();
-      defer.notify('updateMessage', arguments, false);
-      var task = {
-        chat: {
-          talk: talkObject,
-          message: messageObject
-        }
-      };
-      hoodie.task('chatupdatemessage').start(task)
-        .then(defer.resolve)
-        .fail(defer.reject);
+      defer.notify('message', arguments, false);
+      var index;
+      talkObject.messages
+        .map(function (v, k) {
+          if (v.id === messageObject.id)
+            index = k;
+        });
+      if (talkObject.messages[index].owner.userId !== hoodie.id()) {
+        defer.reject('you is not the owner of the message')
+      } else {
+        talkObject.messages[index] = messageObject;
+        hoodie.store.save('chat', talkObject.id, talkObject)
+          .then(function (chat) {
+            var task = {
+              chat: chat
+            };
+            task.chat.message = messageObject;
+            defer.resolve(task)
+          })
+          .fail(defer.reject);
+      }
       return defer.promise();
     },
     deleteMessage: function (talkObject, messageObject) {
       var defer = window.jQuery.Deferred();
-      defer.notify('', arguments, false);
-      var task = {
-        chat: {
-          talk: talkObject,
-          message: messageObject
-        }
-      };
-      hoodie.task('chatdeletemessage').start(task)
-        .then(defer.resolve)
-        .fail(defer.reject);
+      defer.notify('message', arguments, false);
+      var index;
+      talkObject.messages
+        .map(function (v, k) {
+          if (v.id === messageObject.id)
+            index = k;
+        });
+      if (talkObject.messages[index].owner.userId !== hoodie.id()) {
+        defer.reject('you is not the owner of the message')
+      } else {
+        talkObject.messages.splice(index, 1);
+        hoodie.store.save('chat', talkObject.id, talkObject)
+          .then(function (chat) {
+            var task = {
+              chat: chat
+            };
+            task.chat.message = messageObject;
+            defer.resolve(task)
+          })
+          .fail(defer.reject);
+      }
       return defer.promise();
     },
     getTalk: function (talkObject) {
       var defer = window.jQuery.Deferred();
       defer.notify('getTalk', arguments, false);
-      var task = {
-        chat: {
-          talk: talkObject
-        }
-      };
-      hoodie.task('chatgettalk').start(task)
+      hoodie.store.find('chat', talkObject.id)
         .then(defer.resolve)
         .fail(defer.reject);
       return defer.promise();
-    },
-    share: function (talkObject) {
-      var defer = window.jQuery.Deferred();
-      defer.notify('share', arguments, false);
-      var task = {
-        chat: {
-          talk: talkObject
-        }
-      };
-      hoodie.task('chatshare').start(task)
-        .then(defer.resolve)
-        .fail(defer.reject);
-      return defer.promise();
-    },
+    }
   };
 
   // var debugPromisseGstart = function (text) {
