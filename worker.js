@@ -16,8 +16,6 @@ var Chat = require('./lib');
 module.exports = function (hoodie, callback) {
   var chat = new Chat(hoodie);
 
-  hoodie.task.on('chatlookup:add', chat.lookup);
-
   hoodie.task.on('chatdualfollow:add', chat.dualFollow);
 
   callback();
