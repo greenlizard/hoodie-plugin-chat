@@ -14,6 +14,7 @@ Hoodie.extend(function (hoodie) {
     hoodie.task('chatdualfollow').start(task)
       .then(defer.resolve)
       .fail(defer.reject);
+    hoodie.remote.push();
     return defer.promise();
   };
 
