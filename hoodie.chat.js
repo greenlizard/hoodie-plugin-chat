@@ -28,9 +28,10 @@ Hoodie.extend(function (hoodie) {
       defer.notify('talk', arguments, false);
 
       var chat = {
-        userId: hoodie.id()
+        userId: hoodie.id(),
+        exclusive: [ userId, hoodie.id() ]
       };
-
+      hoodie.remote.sync();
       hoodie.pubsub.bidirectional(userId, hoodie.chat.pubsubtypes, true)
         .then(function () {
           hoodie.store.add('talk', chat)
@@ -52,13 +53,13 @@ Hoodie.extend(function (hoodie) {
                     })
                     .reduce(function (b, c) {
                       return b || c;
-                    }, false)
+                    }, false);
                   if (find) {
                     defer.resolve(talk);
                   }
-                })
+                });
                 if (!find) {
-                  defer.reject('chat not found')
+                  defer.reject('chat not found');
                 }
               })
               .fail(defer.reject);
@@ -84,15 +85,8 @@ Hoodie.extend(function (hoodie) {
     feed: function () {
       var defer = window.jQuery.Deferred();
       defer.notify('feed', arguments, false);
-      hoodie.store.findAll('chat')
-        .then(function (chats) {
-          var task = {
-            chat: {
-              feed: chats
-            }
-          };
-          defer.resolve(task);
-        })
+      hoodie.store.findAll('talk')
+        .then(defer.resolve)
         .fail(defer.reject);
 
       return defer.promise();
@@ -101,24 +95,18 @@ Hoodie.extend(function (hoodie) {
       var defer = window.jQuery.Deferred();
       defer.notify('message', arguments, false);
 
-      messageObject.exclusive= [ talkObject.id, hoodie.id() ];
-      messageObject.userId= hoodie.id();
+      messageObject.exclusive = [ talkObject.id ];
+      messageObject.userId = hoodie.id();
 
       hoodie.store.add('message', messageObject)
-        .then(function (chat) {
-          var task = {
-            chat: chat
-          };
-          task.chat.message = messageObject;
-          defer.resolve(task);
-        })
+        .then(defer.resolve)
         .fail(defer.reject);
       return defer.promise();
     },
     getTalk: function (talkObject) {
       var defer = window.jQuery.Deferred();
       defer.notify('getTalk', arguments, false);
-      hoodie.store.find('chat', talkObject.id)
+      hoodie.store.find('talk', talkObject.id)
         .then(defer.resolve)
         .fail(defer.reject);
       return defer.promise();

@@ -21,7 +21,7 @@ suite('feed', function () {
   });
 
   test('hommer should talk lisa', function (done) {
-    hoodie.chat.talk('lisa')
+    hoodie.chat.talk(_.find(window.fixtures.users, { username: 'Lisa' }).hoodieId)
       .fail(function (err) {
         done(err);
         assert.ok(false, err.message);
@@ -35,28 +35,16 @@ suite('feed', function () {
   test('hommer should get talk/text feed', function (done) {
     hoodie.chat.feed()
       .fail(done)
-      .then(function (task) {
-        this.hommerTalk = task.chat.feed[0];
+      .then(function (tasks) {
+        this.hommerTalk = tasks[0];
         done();
         assert.ok(true, 'feed with success');
       }.bind(this));
   });
 
-  test('hommer should edit talk', function (done) {
-    var hommerTalk = this.hommerTalk;
-    hommerTalk.title = 'my inteligent dauther';
-
-    hoodie.chat.updateTalk(hommerTalk)
-      .fail(done)
-      .then(function () {
-        done();
-        assert.ok(true, 'talk with success');
-      });
-  });
-
   test('lisa should talk', function (done) {
     signinUser('Lisa', '123', function () {
-      hoodie.chat.talk('hommer')
+      hoodie.chat.talk(_.find(window.fixtures.users, { username: 'Hommer' }).hoodieId)
         .fail(function (err) {
           done((err.message !== 'conflict') ? err: null);
           assert.ok(false, err.message);
@@ -67,23 +55,6 @@ suite('feed', function () {
         });
     })
   });
-
-
-  test('lisa should edit hommer talk', function (done) {
-    var hommerTalk = this.hommerTalk;
-    hommerTalk.title = 'D\'oh Homer';
-
-    hoodie.chat.updateTalk(hommerTalk)
-      .fail(function () {
-        done();
-        assert.ok(false, 'talk hould edit only by owner');
-      })
-      .then(function () {
-        done();
-        assert.ok(true, 'talk should edit by lisa');
-      });
-  });
-
 
   test('lisa should delete hommer talk', function (done) {
     var hommerTalk = this.hommerTalk;
@@ -108,14 +79,14 @@ suite('feed', function () {
         })
         .then(function (feed) {
           done();
-          assert.ok(feed.rows.length == 0, 'feed with success');
+          assert.ok(feed.rows.length === 0, 'feed with success');
         });
     })
   });
 
 
   test('hommer should talk lisa', function (done) {
-    hoodie.chat.talk('lisa')
+    hoodie.chat.talk(_.find(window.fixtures.users, { username: 'Lisa' }).hoodieId)
       .fail(function (err) {
         done(err);
         assert.ok(false, err.message);
@@ -132,8 +103,8 @@ suite('feed', function () {
 
     hoodie.chat.message(hommerTalk, {text: 'vegan means eat bacon right?!'})
       .fail(done)
-      .then(function (task) {
-        this.hommerMessage = task.chat.message;
+      .then(function (message) {
+        this.hommerMessage = message;
         assert.ok(true, 'message with success');
         done();
       }.bind(this));
@@ -144,8 +115,8 @@ suite('feed', function () {
     signinUser('Lisa', '123', function () {
       hoodie.chat.message(hommerTalk, {text: 'no daddy bacon is an animal!'})
         .fail(done)
-        .then(function (task) {
-          this.lisaMessage = task.chat.message;
+        .then(function (message) {
+          this.lisaMessage = message;
           assert.ok(true, 'message with success');
           done();
         }.bind(this));
@@ -189,51 +160,6 @@ suite('feed', function () {
     })
   });
 
-  test('hommer should not update lisa message', function (done) {
-    var hommerTalk = this.hommerTalk;
-    var lisaMessage = this.lisaMessage;
-    signinUser('Hommer', '123', function () {
-      hoodie.chat.updateMessage(hommerTalk, lisaMessage)
-        .fail(function (err) {
-          assert.ok(err, 'message with success');
-          done();
-        })
-        .then(function () {
-          assert.ok(true, 'wrong message update');
-          done();
-        });
-    })
-  });
-
-  test('hommer should not delete lisa message', function (done) {
-    var hommerTalk = this.hommerTalk;
-    var lisaMessage = this.lisaMessage;
-    signinUser('Hommer', '123', function () {
-      hoodie.chat.deleteMessage(hommerTalk, lisaMessage)
-        .fail(function (err) {
-          assert.ok(err, 'message with success');
-          done();
-        })
-        .then(function () {
-          assert.ok(false, 'wrong message update');
-          done();
-        });
-    })
-  });
-
-  test('hommer should update his message', function (done) {
-    var hommerTalk = this.hommerTalk;
-    var hommerMessage = this.hommerMessage;
-    hommerMessage.text = 'D\'oh!!!!!!!';
-    signinUser('Hommer', '123', function () {
-      hoodie.chat.updateMessage(hommerTalk, hommerMessage)
-        .fail(done)
-        .then(function (task) {
-          assert.ok(task.chat.message.text === hommerMessage.text, 'message with success');
-          done();
-        });
-    })
-  });
 
   test('hommer should delete his message', function (done) {
     var hommerTalk = this.hommerTalk;
