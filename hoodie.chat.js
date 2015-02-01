@@ -28,7 +28,7 @@ Hoodie.extend(function (hoodie) {
       defer.notify('talk', arguments, false);
 
       var chat = {
-        exclusive: [ userId, hoodie.id() ]
+        userId: hoodie.id()
       };
 
       hoodie.pubsub.bidirectional(userId, hoodie.chat.pubsubtypes, true)
