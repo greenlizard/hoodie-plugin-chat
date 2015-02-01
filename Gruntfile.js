@@ -278,5 +278,7 @@ module.exports = function (grunt) {
     'shell:npmUnlink',
     'shell:removePlugin'
   ]);
-
+  grunt.registerTask('lint', [
+    'jshint'
+  ]);
 };
