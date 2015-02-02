@@ -4,11 +4,6 @@ suite('feed', function () {
   suiteSetup(loadUsers);
   suiteSetup(cleanAllTalks);
 
-  var x = {};
-  var func = function () {
-    console.log(x);
-  };
-  hoodie.chat.setElement(x, func);
 
   test('signIn hommer', function (done) {
     hoodie.account.signIn('Hommer', '123')
@@ -161,22 +156,6 @@ suite('feed', function () {
         .fail(done)
         .then(function (task) {
           assert.ok(true, 'message with success');
-          done();
-        });
-    })
-  });
-
-
-  test('hommer should delete his message', function (done) {
-    var hommerTalk = this.hommerTalk;
-    var hommerMessage = this.hommerMessage;
-    signinUser('Hommer', '123', function () {
-      hoodie.chat.deleteMessage(hommerTalk, hommerMessage)
-        .fail(function (err) {
-          done(err);
-        })
-        .then(function () {
-          assert.ok(true, 'delete message with success');
           done();
         });
     })
