@@ -7,35 +7,47 @@
 
 Hoodie.extend(function (hoodie) {
   'use strict';
+  var _talks = {};
 
-
-  hoodie.store.on('profile:add', function (profile) {
-    if (profile.id !== hoodie.id())
-      hoodie.chat.talks['fake-' + profile.id] = {
+  var genFake = function (profile, talks) {
+    if (profile.id !== hoodie.id()) {
+      talks['fake-' + profile.id] = {
         profile: profile
       };
-    hoodie.trigger('ontalk');
-  });
+    }
+  };
 
-  hoodie.store.on('talk:add', function (talk) {
+  var cleanFake = function (talk, talks) {
     talk.exclusive.map(function (userId) {
       if (userId !== hoodie.id()) {
         talk.profile = talk.profiles[userId];
-        hoodie.chat.talks[talk.id] = talk;
-        delete hoodie.chat.talks['fake-' + userId];
-        hoodie.trigger('ontalk');
+        talks[talk.id] = talk;
+        delete talks['fake-' + userId];
       }
     });
+  };
+
+  hoodie.store.on('profile:add', function (profile) {
+    genFake(profile, _talks);
+    hoodie.trigger('ontalk', _talks);
+  });
+
+  hoodie.store.on('talk:add', function (talk) {
+    cleanFake(talk, _talks);
+    hoodie.trigger('ontalk', _talks);
   });
 
   hoodie.store.on('message:add', function (message) {
-    hoodie.chat.talks[message.talkId].messages = hoodie.chat.talks[message.talkId].messages || [];
-    hoodie.chat.talks[message.talkId].messages.push(message);
-    hoodie.trigger('ontalk');
+    if (!!_talks && _talks[message.talkId]) {
+      _talks[message.talkId].messages = _talks[message.talkId].messages || [];
+      _talks[message.talkId].messages.push(message);
+    }
+    if (message.talkId === hoodie.chat.currentTalk.id)
+      hoodie.trigger('onmessage', message);
   });
 
   hoodie.chat = {
-    talks: {},
+
     currentTalk: null,
     pubsubtypes: ['talk', 'message'],
 
@@ -45,6 +57,13 @@ Hoodie.extend(function (hoodie) {
       hoodie.profile.get(userId)
         .then(defer.resolve)
         .fail(defer.reject);
+      return defer.promise();
+    },
+    setCurrentTalk: function (talk) {
+      var defer = window.jQuery.Deferred();
+      defer.notify('getProfile', arguments, false);
+      hoodie.chat.currentTalk = talk;
+      defer.resolve(talk);
       return defer.promise();
     },
 
@@ -65,7 +84,10 @@ Hoodie.extend(function (hoodie) {
           hoodie.pubsub.bidirectional(userId, hoodie.chat.pubsubtypes)
             .then(function () {
               hoodie.store.add('talk', chat)
-                .then(defer.resolve)
+                .then(function (talk) {
+                  hoodie.chat.currentTalk = talk;
+                  defer.resolve(talk);
+                })
                 .fail(defer.reject);
             })
             .fail(function (err) {
@@ -73,8 +95,11 @@ Hoodie.extend(function (hoodie) {
                 defer.reject(err);
               else
                 hoodie.chat.getTalkByUserId(userId)
-                  .then(defer.resolve)
-                  .fail(defer.reject);
+                .then(function (talk) {
+                  hoodie.chat.currentTalk = talk;
+                  defer.resolve(talk);
+                })
+                .fail(defer.reject);
             });
         })
         .fail(defer.reject);
@@ -98,8 +123,20 @@ Hoodie.extend(function (hoodie) {
     feed: function () {
       var defer = window.jQuery.Deferred();
       defer.notify('feed', arguments, false);
-      hoodie.store.findAll('talk')
-        .then(defer.resolve)
+      var result = {};
+      hoodie.store.findAll('profile')
+        .then(function (profiles) {
+          profiles.map(function (profile) {
+            genFake(profile, result);
+          });
+          return hoodie.store.findAll('talk');
+        })
+        .then(function (talks) {
+          talks.map(function (_talk) {
+            cleanFake(_talk, result);
+          });
+          defer.resolve(result);
+        })
         .fail(defer.reject);
 
       return defer.promise();
@@ -117,11 +154,44 @@ Hoodie.extend(function (hoodie) {
         .fail(defer.reject);
       return defer.promise();
     },
-    getTalk: function (talkObject) {
+    setMessages: function (talkId, talk) {
+      var defer = window.jQuery.Deferred();
+      defer.notify('setMessages', arguments, false);
+      hoodie.chat.getMessages(talkId)
+        .then(function (messages) {
+          talk.messages = messages;
+          defer.resolve(talk);
+        })
+        .fail(defer.reject);
+      return defer.promise();
+    },
+    getMessages: function (talkId) {
+      var defer = window.jQuery.Deferred();
+      defer.notify('getMessages', arguments, false);
+      hoodie.store.findAll('message')
+        .then(function (messages) {
+          var filteredMessages = messages.filter(function (message) {
+            return (message.talkId === talkId);
+          })
+          .reverse();
+          defer.resolve(filteredMessages);
+        })
+        .fail(function () {
+          defer.resolve([]);
+        });
+      return defer.promise();
+    },
+    getTalk: function (talkId) {
       var defer = window.jQuery.Deferred();
       defer.notify('getTalk', arguments, false);
-      hoodie.store.find('talk', talkObject.id)
-        .then(defer.resolve)
+      hoodie.store.find('talk', talkId)
+        .then(function (talk) {
+          return hoodie.chat.setMessages(talkId, talk);
+        })
+        .then(function (talk) {
+          hoodie.chat.currentTalk = talk;
+          defer.resolve(talk);
+        })
         .fail(defer.reject);
       return defer.promise();
     },
@@ -131,25 +201,36 @@ Hoodie.extend(function (hoodie) {
       var find = false;
       hoodie.store.findAll('talk')
         .then(function (talks) {
-          talks.forEach(function (talk) {
-            find = talk.exclusive
+          var talk = talks.filter(function (_talk) {
+
+            return _talk.exclusive
               .map(function (v) {
                 return (v === userId);
               })
               .reduce(function (b, c) {
                 return b || c;
               }, false);
-            if (find) {
-              hoodie.chat.currentTalk = talk;
-              defer.resolve(talk);
-            }
+
           });
-          if (!find) {
+          if (talk.length > 0) {
+            hoodie.chat.setMessages(talk.id, talk)
+              .then(function (talk) {
+                hoodie.chat.currentTalk = talk;
+                defer.resolve(talk);
+              })
+              .fail(defer.reject);
+          } else {
             defer.reject('chat not found');
           }
         })
         .fail(defer.reject);
       return defer.promise();
+    },
+    onTalk: function (cb) {
+      hoodie.on('ontalk', cb);
+    },
+    onMessage: function (cb) {
+      hoodie.on('onmessage', cb);
     }
   };
 
