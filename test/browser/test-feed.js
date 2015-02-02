@@ -4,6 +4,12 @@ suite('feed', function () {
   suiteSetup(loadUsers);
   suiteSetup(cleanAllTalks);
 
+  var x = {};
+  var func = function () {
+    console.log(x);
+  };
+  hoodie.chat.setElement(x, func);
+
   test('signIn hommer', function (done) {
     hoodie.account.signIn('Hommer', '123')
       .fail(function (err) {

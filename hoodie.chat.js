@@ -32,7 +32,7 @@ Hoodie.extend(function (hoodie) {
         exclusive: [ userId, hoodie.id() ]
       };
       hoodie.remote.sync();
-      hoodie.pubsub.bidirectional(userId, hoodie.chat.pubsubtypes, true)
+      hoodie.pubsub.bidirectional(userId, hoodie.chat.pubsubtypes)
         .then(function () {
           hoodie.store.add('talk', chat)
             .then(defer.resolve)
@@ -95,7 +95,8 @@ Hoodie.extend(function (hoodie) {
       var defer = window.jQuery.Deferred();
       defer.notify('message', arguments, false);
 
-      messageObject.exclusive = [ talkObject.id ];
+      messageObject.talkId = talkObject.id;
+      messageObject.exclusive = talkObject.exclusive;
       messageObject.userId = hoodie.id();
 
       hoodie.store.add('message', messageObject)
@@ -110,9 +111,6 @@ Hoodie.extend(function (hoodie) {
         .then(defer.resolve)
         .fail(defer.reject);
       return defer.promise();
-    },
-    on: function (cb) {
-      hoodie.store.on('chat:change', cb);
     }
   };
 
