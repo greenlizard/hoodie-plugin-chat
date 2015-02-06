@@ -42,7 +42,7 @@ Hoodie.extend(function (hoodie) {
       _talks[message.talkId].messages = _talks[message.talkId].messages || [];
       _talks[message.talkId].messages.push(message);
     }
-    if (message.talkId === hoodie.chat.currentTalk.id)
+    if (hoodie.chat.currentTalk && message.talkId === hoodie.chat.currentTalk.id)
       hoodie.trigger('onmessage', message);
   });
 
