@@ -49,27 +49,13 @@ Hoodie.extend(function (hoodie) {
 
   function checkChatStatus() {
     setTimeout(function () {
-      hoodie.profile.update({lastChatCheck: new Date()})
-        .then(function () {
-          var defer = window.jQuery.Deferred();
-          hoodie.store.findAll('profile')
-            .then(defer.resolve)
-            .fail(defer.reject);
-          return defer.promise();
-        })
-        .then(function (profiles) {
+      if (hoodie.account.username && hoodie.account.hasAccount() && !hoodie.account.hasAnonymousAccount()) {
+        hoodie.store.update('chatstatus', hoodie.id(), {lastChatCheck: new Date()})
+          .always(function () {
+            checkChatStatus();
+          });
+      }
 
-          return window.jQuery.when(profiles.map(function (profile) {
-            var check = window.moment(profile.lastChatCheck)._d,
-            now = window.moment()._d;
-            profile.online = window.moment.duration(check, now, 'm') < 5;
-            return hoodie.profile.update(profile, profile.id);
-          }));
-
-        })
-        .always(function () {
-          checkChatStatus();
-        });
     }, 10000);
   }
   checkChatStatus();
@@ -77,14 +63,48 @@ Hoodie.extend(function (hoodie) {
   hoodie.chat = {
 
     currentTalk: null,
-    pubsubtypes: ['talk', 'message'],
+    pubsubtypes: ['talk', 'message', 'chatstatus'],
 
-    getProfile: function (userId) {
+    isOnline: function (userId) {
       var defer = window.jQuery.Deferred();
       defer.notify('getProfile', arguments, false);
-      hoodie.profile.get(userId)
+      hoodie.chat.getChatStatus(userId)
+        .then(function (task) {
+            if (task && task.chatstatus && task.chatstatus.lastChatCheck) {
+              var check = window.moment(task.chatstatus.lastChatCheck)._d,
+              now = window.moment()._d;
+              return window.moment.duration( now - check).asMinutes() < 5;
+            } else {
+              return false;
+            }
+          })
         .then(defer.resolve)
         .fail(defer.reject);
+      return defer.promise();
+    },
+
+    getChatStatus: function (userId) {
+      var defer = window.jQuery.Deferred();
+      defer.notify('get', arguments, false);
+      if (!!userId && userId !== hoodie.id()) {
+        var task = {
+          chat: {
+            userId: userId
+          }
+        };
+        hoodie.task('chatgetchatstatus').start(task)
+          .then(defer.resolve)
+          .fail(defer.reject);
+        hoodie.remote.push();
+      } else {
+        hoodie.store.find('chatstatus', hoodie.id())
+          .then(function (doc) {
+            defer.resolve({ chatstatus: doc });
+          })
+          .fail(function (err) {
+            defer.reject(err);
+          });
+      }
       return defer.promise();
     },
     setCurrentTalk: function (talk) {
