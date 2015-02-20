@@ -46,6 +46,34 @@ Hoodie.extend(function (hoodie) {
       hoodie.trigger('onmessage', message);
   });
 
+
+  function checkChatStatus() {
+    setTimeout(function () {
+      hoodie.profile.update({lastChatCheck: new Date()})
+        .then(function () {
+          var defer = window.jQuery.Deferred();
+          hoodie.store.findAll('profile')
+            .then(defer.resolve)
+            .fail(defer.reject);
+          return defer.promise();
+        })
+        .then(function (profiles) {
+
+          return window.jQuery.when(profiles.map(function (profile) {
+            var check = window.moment(profile.lastChatCheck)._d,
+            now = window.moment()._d;
+            profile.online = window.moment.duration(check, now, 'm') < 5;
+            return hoodie.profile.update(profile, profile.id);
+          }));
+
+        })
+        .always(function () {
+          checkChatStatus();
+        });
+    }, 10000);
+  }
+  checkChatStatus();
+
   hoodie.chat = {
 
     currentTalk: null,
