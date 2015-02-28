@@ -58,7 +58,7 @@ Hoodie.extend(function (hoodie) {
 
     }, 10000);
   }
-  checkChatStatus();
+  //checkChatStatus();
 
   hoodie.chat = {
 
