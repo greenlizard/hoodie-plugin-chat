@@ -27,24 +27,33 @@ Hoodie.extend(function (hoodie) {
     });
   };
 
-  hoodie.store.on('profile:add', function (profile) {
+  function onProfile (profile) {
     genFake(profile, _talks);
     hoodie.trigger('ontalk', _talks);
-  });
+  }
 
-  hoodie.store.on('talk:add', function (talk) {
+  hoodie.store.on('profile:add', onProfile);
+  hoodie.remote.on('profile:add', onProfile);
+
+  function onTalk(talk) {
     cleanFake(talk, _talks);
     hoodie.trigger('ontalk', _talks);
-  });
+  }
 
-  hoodie.store.on('message:add', function (message) {
+  hoodie.store.on('talk:add', onTalk);
+  hoodie.remote.on('talk:add', onTalk);
+
+  function onMessage (message, remote) {
     if (!!_talks && _talks[message.talkId]) {
       _talks[message.talkId].messages = _talks[message.talkId].messages || [];
       _talks[message.talkId].messages.push(message);
     }
     if (hoodie.chat.currentTalk && message.talkId === hoodie.chat.currentTalk.id)
-      hoodie.trigger('onmessage', message);
-  });
+      hoodie.trigger('onmessage', message, remote);
+  }
+
+  hoodie.store.on('message:add', onMessage);
+  hoodie.remote.on('message:add', onMessage);
 
 
   function checkChatStatus() {
@@ -123,6 +132,7 @@ Hoodie.extend(function (hoodie) {
       var participants = [ userId, hoodie.id() ];
       hoodie.profile.getAsObjects(participants)
         .then(function (profiles) {
+          var _defer = window.jQuery.Deferred();
           var chat = {
             userId: hoodie.id(),
             exclusive: participants,
@@ -131,26 +141,30 @@ Hoodie.extend(function (hoodie) {
 
           hoodie.pubsub.bidirectional(userId, hoodie.chat.pubsubtypes)
             .then(function () {
-              hoodie.store.add('talk', chat)
-                .then(function (talk) {
-                  hoodie.chat.currentTalk = talk;
-                  defer.resolve(talk);
-                })
-                .fail(defer.reject);
+              _defer.resolve(chat);
             })
-            .fail(function (err) {
-              if (err.err !== 'You already subscribed.')
-                defer.reject(err);
-              else
-                hoodie.chat.getTalkByUserId(userId)
-                .then(function (talk) {
-                  hoodie.chat.currentTalk = talk;
-                  defer.resolve(talk);
-                })
-                .fail(defer.reject);
-            });
+            .fail(_defer.reject);
+          return _defer.promise();
         })
-        .fail(defer.reject);
+        .then(function (chat) {
+          hoodie.store.add('talk', chat)
+            .then(function (talk) {
+              hoodie.chat.currentTalk = talk;
+              defer.resolve(talk);
+            })
+            .fail(defer.reject);
+        })
+        .fail(function (err) {
+          if (err.err !== 'You already subscribed.')
+            defer.reject(err);
+          else
+            hoodie.chat.getTalkByUserId(userId)
+              .then(function (talk) {
+                hoodie.chat.currentTalk = talk;
+                defer.resolve(talk);
+              })
+              .fail(defer.reject);
+        });
 
       return defer.promise();
     },
@@ -246,7 +260,6 @@ Hoodie.extend(function (hoodie) {
     getTalkByUserId: function (userId) {
       var defer = window.jQuery.Deferred();
       defer.notify('getTalkByUserId', arguments, false);
-      var find = false;
       hoodie.store.findAll('talk')
         .then(function (talks) {
           var talk = talks.filter(function (_talk) {
