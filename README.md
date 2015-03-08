@@ -1,6 +1,6 @@
 hoodie-plugin-chat
 ====================
-[![Build Status](https://travis-ci.org/goappes/hoodie-plugin-chat.svg?branch=master)](https://travis-ci.org/goappes/hoodie-plugin-chat) [![Dependencies](https://david-dm.org/goappes/hoodie-plugin-chat.png)](https://david-dm.org/goappes/hoodie-plugin-chat) [![devDependency Status](https://david-dm.org/goappes/hoodie-plugin-chat/dev-status.svg)](https://david-dm.org/goappes/hoodie-plugin-chat#info=devDependencies) [![Code Climate](https://codeclimate.com/github/goappes/hoodie-plugin-chat/badges/gpa.svg)](https://codeclimate.com/github/goappes/hoodie-plugin-chat)
+[![Build Status](https://travis-ci.org/greenlizard/hoodie-plugin-chat.svg?branch=master)](https://travis-ci.org/greenlizard/hoodie-plugin-chat) [![Dependencies](https://david-dm.org/greenlizard/hoodie-plugin-chat.png)](https://david-dm.org/greenlizard/hoodie-plugin-chat) [![devDependency Status](https://david-dm.org/greenlizard/hoodie-plugin-chat/dev-status.svg)](https://david-dm.org/greenlizard/hoodie-plugin-chat#info=devDependencies) [![Code Climate](https://codeclimate.com/github/greenlizard/hoodie-plugin-chat/badges/gpa.svg)](https://codeclimate.com/github/greenlizard/hoodie-plugin-chat)
 
 ## Dependencies
 ```shell

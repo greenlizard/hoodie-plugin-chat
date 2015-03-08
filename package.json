@@ -53,7 +53,7 @@
   "keywords": [
     "hoodie",
     "chat",
-    "goappes",
+    "greenlizard",
     "plugin"
   ],
   "scripts": {
@@ -61,20 +61,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/goappes/hoodie-plugin-chat"
+    "url": "https://github.com/greenlizard/hoodie-plugin-chat"
   },
   "maintainers": [
     {
       "name": "gabriel",
-      "email": "gabriel@goappes.com"
+      "email": "gabriel@greenlizard.com.br"
     },
     {
       "name": "joao",
-      "email": "joao@goappes.com"
+      "email": "joao@greenlizard.com.br"
     },
     {
-      "name": "italo",
-      "email": "italo@goappes.com"
+      "name": "",
+      "email": "@greenlizard.com.br"
     }
   ]
 }
