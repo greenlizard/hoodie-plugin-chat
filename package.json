@@ -1,6 +1,6 @@
 {
   "name": "hoodie-plugin-chat",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Chat Hoodie plugin",
   "main": "worker.js",
   "dependencies": {
